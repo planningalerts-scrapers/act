@@ -36,7 +36,7 @@ page.search('.listing > *').each do |line|
       when 'Proposal'
         application[:description] = parts[1..-1].join(":").strip!
       when 'Period for representations closes'
-        application[:on_notice_to] = Date.parse(parts[1].strip)
+        application[:on_notice_to] = Date.parse(parts[1].strip, 'd/m/Y')
       end
     end
 
