@@ -23,7 +23,8 @@ page.search('.listing > *').each do |line|
     if line.text.strip! == ""
       next
     end
-    parts = line.text.split(":")
+  
+    parts = line.text.encode('UTF-16le', :invalid => :replace, :replace => '').encode('UTF-8').split(":")
     if parts.length == 1
       current_suburb = line.text.strip!
     else
