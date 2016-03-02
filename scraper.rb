@@ -17,6 +17,7 @@ current_suburb = ''
 page.search('.listing > *').each do |line|
   if line.text.strip! == "Click here to view the plans"
     application[:info_url] = line.children.first["href"]
+    application[:comment_url] = application[:info_url]
     applications << application unless application[:address].nil?
     application = {date_scraped: Date.today}
   else
