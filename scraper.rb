@@ -3,7 +3,7 @@ require 'scraperwiki'
 require 'date'
 
 agent = Mechanize.new
-url = "http://www.actpla.act.gov.au/topics/your_say/comment/pubnote"
+url = "http://www.planning.act.gov.au/development_applications/pubnote"
 page = agent.get(url)
 # The way that Mechanize is invoking Nokogiri for parsing the html is for some reason not working with this html which
 # is malformed: See http://validator.w3.org/check?uri=http://apps.actpla.act.gov.au/pubnote/index.asp&charset=(detect+automatically)&doctype=Inline&group=0
@@ -24,7 +24,7 @@ page.search('.listing > *').each do |line|
     if line.text.strip! == ""
       next
     end
-  
+
     parts = line.text.encode('UTF-16le', :invalid => :replace, :replace => '').encode('UTF-8').split(":")
     if parts.length == 1
       current_suburb = line.text.strip!
