@@ -1,50 +1,26 @@
 require 'mechanize'
 require 'scraperwiki'
-require 'date'
 
 agent = Mechanize.new
-url = "http://www.planning.act.gov.au/development_applications/pubnote"
+url = "https://www.planning.act.gov.au/development-applications-assessments/development-applications"
 page = agent.get(url)
-# The way that Mechanize is invoking Nokogiri for parsing the html is for some reason not working with this html which
-# is malformed: See http://validator.w3.org/check?uri=http://apps.actpla.act.gov.au/pubnote/index.asp&charset=(detect+automatically)&doctype=Inline&group=0
-# It's chopping out the content that we're interested in. So, doing the parsing explicitly so we can control how it's done.
-page = Nokogiri::HTML(page.body)
 
-# Walking through the lines. Every 7 lines is a new application
-applications = []
-application = {date_scraped: Date.today}
-current_suburb = ''
-page.search('.listing > *').each do |line|
-  if line.text.strip! == "Click here to view the plans"
-    application[:info_url] = line.children.first["href"]
-    application[:comment_url] = application[:info_url]
-    applications << application unless application[:address].nil?
-    application = {date_scraped: Date.today}
-  else
-    if line.text.strip! == ""
-      next
-    end
-
-    parts = line.text.encode('UTF-16le', :invalid => :replace, :replace => '').encode('UTF-8').split(":")
-    if parts.length == 1
-      current_suburb = line.text.strip!
-    else
-      case parts[0]
-      when 'Development Application'
-        application[:council_reference] = parts[1].strip!
-      when 'Address'
-        application[:address] = "#{parts[1..-1].join(":")}, #{current_suburb}, ACT" unless parts[1].strip! == 'NO ADDRESS'
-      when 'Block'
-      when 'Proposal'
-        application[:description] = parts[1..-1].join(":").strip!
-      when 'Period for representations closes'
-        application[:on_notice_to] = Date.parse(parts[1].strip, 'd/m/Y')
-      end
-    end
-
+page.search(".DA-list-item").each do |item|
+  suburb = item.at(".suburb").inner_text.strip
+  street_address = item.at(".street-address").inner_text.strip
+  address = "#{street_address}, #{suburb}, ACT"
+  record = {
+    council_reference: item.at(".da-number h2").inner_text.strip,
+    address: address,
+    description: item.at(".proposal-text").inner_text.strip,
+    on_notice_to: Date.parse(item.at(".representation-closes strong"), "d/m/Y").to_s,
+    info_url: item.at(".da-links a.da-links__details")["href"],
+    date_scraped: Date.today.to_s
+  }
+  if street_address == ""
+    puts "Skipping #{record[:council_reference]} because it has an empty street address"
+    next
   end
-end
 
-applications.each do |record|
   ScraperWiki.save_sqlite([:council_reference], record)
 end
