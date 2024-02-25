@@ -2,7 +2,7 @@ require 'mechanize'
 require 'scraperwiki'
 
 agent = Mechanize.new
-url = "https://www.planning.act.gov.au/development-applications-assessments/development-applications"
+url = https://www.planning.act.gov.au/applications-and-assessments/development-applications/browse-das"
 page = agent.get(url)
 
 page.search(".DA-list-item").each do |item|
@@ -14,7 +14,7 @@ page.search(".DA-list-item").each do |item|
     address: address,
     description: item.at(".proposal-text").inner_text.strip,
     on_notice_to: Date.parse(item.at(".representation-closes strong"), "d/m/Y").to_s,
-    info_url: item.at(".da-links a.da-links__details")["href"],
+    info_url: item.at("da-links__details a.da-links__details")["href"],
     date_scraped: Date.today.to_s
   }
   if street_address == ""
